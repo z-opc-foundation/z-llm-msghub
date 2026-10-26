@@ -2,6 +2,11 @@
 
 Agent 间消息总线，轻量级 pub/sub 系统。
 
+> **仓状态**：2026-10-26 自 `z-team/z-llm-msghub` 整体迁出为独立仓
+> `z-opc-foundation/z-llm-msghub`（四模块 reactor：common/core/client/starter，
+> 零 z-team 内部依赖）。版本线接 Central 上 z-team 发的 **1.0.46**，独立仓从
+> **1.0.47** 起续线（已发布）。发版：`bash _doc/003_script/deploy_maven_center.sh publish`。
+
 ## 为什么不使用标准 MQ
 
 | 维度   | 标准 MQ (Kafka/RabbitMQ/RocketMQ)           | z-llm-msghub           |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# deploy_maven_center.sh — z-llm-agent 一键发布到 Maven Central
+# deploy_maven_center.sh — z-llm-msghub 一键发布到 Maven Central
 #
 # 子命令：
 #   publish    实际 mvn deploy -Pcentral（默认）
@@ -21,7 +21,7 @@ die()  { printf "[deploy][ERROR] %s\n" "$*" >&2; exit 1; }
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$REPO_ROOT"
-[[ -f pom.xml ]] || die "请在 z-llm-agent 仓库根目录运行此脚本"
+[[ -f pom.xml ]] || die "请在 z-llm-msghub 仓库根目录运行此脚本"
 
 cmd_publish() {
     [[ -f .env ]] || die ".env 不存在（CENTRAL_USERNAME / CENTRAL_TOKEN / CENTRAL_GPG_PASSPHRASE）"
@@ -34,7 +34,7 @@ cmd_publish() {
     export GNUPGHOME="$PWD/.gnupg"
 
     log "═══════════════════════════════════════════════════════════════"
-    log " 即将把 z-llm-agent（5 模块 reactor）上传到 Maven Central"
+    log " 即将把 z-llm-msghub（4 模块 reactor）上传到 Maven Central"
     log "  groupId : io.github.yuku123"
     log "  version : $(grep '<revision>' pom.xml | sed 's/.*<revision>\(.*\)<\/revision>.*/\1/')"
     log "  GPG KEY : $(GNUPGHOME="$GNUPGHOME" gpg --list-secret-keys --keyid-format short 2>/dev/null | grep -oE '[A-F0-9]{8}$' | head -1)"
@@ -47,10 +47,10 @@ cmd_publish() {
         -Pcentral \
         -DskipTests \
         -Dgpg.skip=false \
-        2>&1 | tee /tmp/z-llm-agent-deploy.log | tail -60
+        2>&1 | tee /tmp/z-llm-msghub-deploy.log | tail -60
 
-    if grep -q "BUILD SUCCESS" /tmp/z-llm-agent-deploy.log \
-       && grep -q "Uploaded bundle successfully" /tmp/z-llm-agent-deploy.log; then
+    if grep -q "BUILD SUCCESS" /tmp/z-llm-msghub-deploy.log \
+       && grep -q "Uploaded bundle successfully" /tmp/z-llm-msghub-deploy.log; then
         log "✅ BUILD SUCCESS + Bundle uploaded"
         log "Central Portal 控制台：https://central.sonatype.com/publishing/deployments"
         return 0
@@ -60,7 +60,7 @@ cmd_publish() {
     #    HTTP 客户端在上传阶段 Broken pipe（1.0.47 实测 4 连败，bundle 963K 也断，
     #    与体积无关）。构建/签名/staging 都是好的，只是上传这一步过不去。
     #    解法：bundle 已生成，用 curl 直传 Portal API（同一条链路 curl 就通，3 秒 201）。
-    if [ -f target/central-publishing/central-bundle.zip ] && grep -q "BUILD SUCCESS" /tmp/z-llm-agent-deploy.log; then
+    if [ -f target/central-publishing/central-bundle.zip ] && grep -q "BUILD SUCCESS" /tmp/z-llm-msghub-deploy.log; then
         log "mvn 上传被本机代理掐断，改用 curl 直传 Portal API…"
         RESP=$(curl -s --max-time 120 \
             -u "$CENTRAL_USERNAME:$CENTRAL_TOKEN" \
@@ -81,7 +81,7 @@ cmd_publish() {
         die "curl 直传也失败（HTTP $CODE）。看响应体：$BODY"
     fi
 
-    die "BUILD FAILURE，请看 /tmp/z-llm-agent-deploy.log"
+    die "BUILD FAILURE，请看 /tmp/z-llm-msghub-deploy.log"
 }
 
 cmd_verify() {

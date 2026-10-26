@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-llm-msghub</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>z-llm-msghub-core</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Z TeamMsg Core</name>
+    <description>消息协议 + 路由引擎 + 内存实现</description>
+
+    <dependencies>
+        <!-- msg-common（HubMessage / Topics 共享协议） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-llm-msghub-common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- JSON 序列化 -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-core</artifactId>
+        </dependency>
+
+        <!-- z-util-parser-json (替换 fastjson: 提供 JsonUtil + JsonObject + JsonArray) -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-parser-json</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <proc>none</proc>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <!--
+                  2026-10-22: 原来这里显式钉 3.0.0-M5，但该版本的 JUnitPlatformProvider
+                  需要 junit-platform-launcher 出现在 test classpath 上，否则启动 forked
+                  进程即抛 ClassNotFoundException: org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+                  ⇒ 本模块的测试一个都没跑（Tests run: 0 + BUILD FAILURE）。
+                  删掉显式版本，改为继承父链 pluginManagement 的 2.22.2，与家族其余模块保持一致
+                  （同 z-team-starter / z-team-web 的修法）。
+                -->
+            </plugin>
+        </plugins>
+    </build>
+</project>

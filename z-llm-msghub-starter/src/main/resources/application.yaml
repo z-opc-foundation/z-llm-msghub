@@ -1,0 +1,32 @@
+# msgHub 业务配置(port / profile 由 z-opc 框架与部署环境管理)— z-opc 技术栈改写
+msghub:
+  enabled: true
+  websocket:
+    port: 9091
+    boss-threads: 1
+    worker-threads: 0
+    idle-timeout-seconds: 15
+    path: /msghub
+  persistence:
+    # 留空则按 z-team.workspace 自动解析为 {workspaceRoot}/msgHub/
+    # 显式配置时优先使用显式值
+    data-dir:
+    snapshot-interval-seconds: 30
+    flush-on-change: true
+  route:
+    wildcard-enabled: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.zifang.z.team.msg: INFO
+    io.netty: INFO

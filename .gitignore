@@ -1,0 +1,30 @@
+# build
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ide
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# os
+.DS_Store
+
+# node
+node_modules/
+dist/
+*.local
+pnpm-lock.yaml
+
+# 凭据与本地覆盖：绝不入库（lead 008_组织规范/001_凭证管理规范）
+.env
+*-local.yml
+application-local.yml
+*.pem
+*.p12
+
+# 日志
+*.log
+logs/
+.gnupg/

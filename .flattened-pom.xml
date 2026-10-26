@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.github.yuku123</groupId>
+  <artifactId>z-llm-msghub</artifactId>
+  <version>1.0.47</version>
+  <packaging>pom</packaging>
+  <name>z-llm-msghub (Message Hub as a Service)</name>
+  <description>msgHub 中心消息路由服务：WebSocket 中心枢纽 + Agent 侧客户端 SDK 与 Spring Boot 进程封装</description>
+  <url>https://github.com/z-opc-foundation/z-llm-msghub</url>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/licenses/MIT</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>yuku123</id>
+      <name>yuku123</name>
+      <email>1340947819@qq.com</email>
+      <organization>z-opc-foundation</organization>
+      <organizationUrl>https://github.com/z-opc-foundation</organizationUrl>
+      <roles>
+        <role>owner</role>
+      </roles>
+      <timezone>+08:00</timezone>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/z-opc-foundation/z-llm-msghub.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/z-opc-foundation/z-llm-msghub.git</developerConnection>
+    <url>https://github.com/z-opc-foundation/z-llm-msghub</url>
+  </scm>
+  <repositories>
+    <repository>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>repo1-direct</id>
+      <url>https://repo1.maven.org/maven2</url>
+    </repository>
+  </repositories>
+</project>

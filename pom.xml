@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        z-llm-msghub —— msgHub 中心消息路由服务（一个产品，一个仓）。
+
+        血缘：寄居 z-team 仓（z-llm-msghub 四模块子 reactor）；
+        2026-10-26 起独立成仓，与 z-llm-agent 同批拆出。
+
+        四个模块：
+        - z-llm-msghub-common   共享协议（HubMessage / Topics），core 和 client 共用
+        - z-llm-msghub-core     消息协议 + 路由引擎 + 内存实现
+        - z-llm-msghub-client   Agent 侧 SDK：WebSocket 连接 + 自动重连 + 心跳 + 消息收发
+        - z-llm-msghub-starter  可运行 Spring Boot + Netty 进程（repackage 出 *-boot.jar）
+
+        版本线：接 Central 上 z-team 发的 1.0.46，起点 1.0.47，与 z-team 解耦
+        （z-team 侧 DM 已把本家族四坐标钉死在 Central 已发布版本）。
+
+        发布：bash _doc/003_script/deploy_maven_center.sh
+        （机制照抄 z-llm-agent / z-util：.env 凭证 + 仓内 .gnupg keyring +
+          gpg-with-passphrase.sh 预喂；GPG 私钥同指纹 720B6C5D…）。
+    -->
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-boot-parent</artifactId>
+        <version>1.1.2</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>io.github.yuku123</groupId>
+    <artifactId>z-llm-msghub</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+
+    <name>z-llm-msghub (Message Hub as a Service)</name>
+    <description>msgHub 中心消息路由服务：WebSocket 中心枢纽 + Agent 侧客户端 SDK 与 Spring Boot 进程封装</description>
+
+    <url>https://github.com/z-opc-foundation/z-llm-msghub</url>
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>yuku123</id>
+            <name>yuku123</name>
+            <email>1340947819@qq.com</email>
+            <organization>z-opc-foundation</organization>
+            <organizationUrl>https://github.com/z-opc-foundation</organizationUrl>
+            <timezone>+08:00</timezone>
+            <roles><role>owner</role></roles>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:https://github.com/z-opc-foundation/z-llm-msghub.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/z-opc-foundation/z-llm-msghub.git</developerConnection>
+        <url>https://github.com/z-opc-foundation/z-llm-msghub</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <modules>
+        <module>z-llm-msghub-common</module>
+        <module>z-llm-msghub-core</module>
+        <module>z-llm-msghub-client</module>
+        <module>z-llm-msghub-starter</module>
+    </modules>
+
+    <properties>
+        <!-- CI-friendly 版本根。接 Central 上 z-team 发的 1.0.46，不断线。 -->
+        <revision>1.0.47</revision>
+    </properties>
+
+    <!-- 本机 settings.xml 把 central 镜像到 aliyun，而 aliyun 对本组织新发构件同步滞后
+         （实测 z-llm-msghub-client:1.0.46 镜像 404、repo1 200）。
+         这里显式加 repo1 直连：mirrorOf=central 只拦截 id=central 的仓，不影响本条。 -->
+    <repositories>
+        <repository>
+            <id>repo1-direct</id>
+            <url>https://repo1.maven.org/maven2</url>
+            <releases><enabled>true</enabled></releases>
+            <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+    </repositories>
+
+    <!-- 全仓统一测试台（parent <dependencies> 直供，所有子模块自动继承；
+         版本由父链的 junit-bom 下发。z-team 时代这面台子挂在 z-team 根 pom，
+         平移过来后本仓自备，否则各模块的 org.junit.jupiter 测试源码编译不过） -->
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                        <proc>none</proc>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <!-- parent 的 flatten 是 inherited=false，不会下发 ⇒ 本仓自己常开，
+                 否则发出去的 pom 会带着 z-boot-parent 出厂。 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten-maven-plugin.version}</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>oss</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals><goal>flatten</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>flatten-clean</id>
+                        <phase>clean</phase>
+                        <goals><goal>clean</goal></goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <!-- 发布 Maven Central 专用 profile：bash _doc/003_script/deploy_maven_center.sh
+         结构照抄 z-llm-agent 的实战版（z-util 同款机制）：
+         - deploy-plugin skip + central-publishing-maven-plugin 接管，不会重复 deploy
+         - javadoc doclint=none（Java 8 的 HTML5 校验必炸，Central 又强制要 javadoc.jar）
+         - antrun 剔掉 JDK 自带 javadoc 静态资产（Cloudflare 100 秒掐断的体积大头）
+         - gpg 3.2.8 不读 -Dgpg.passphrase，必须走仓内 gpg-with-passphrase.sh 预喂
+         - keyring 用仓内 .gnupg（GNUPGHOME 由发布脚本 export），私钥与 z-util 同一把
+         - starter 的 boot.jar 不上 Central（spring-boot.repackage.skip），发的是普通库件 -->
+    <profiles>
+        <profile>
+            <id>central</id>
+            <properties>
+                <!-- true 跳过 javadoc / GPG（本地 dry-run 用）；真发 Central 时 false -->
+                <maven.javadoc.skip>false</maven.javadoc.skip>
+                <central.gpg.skip>false</central.gpg.skip>
+                <!-- 发布包瘦身：Central 只发库件坐标，starter 的 boot.jar 不上 Central。
+                     fat jar 可随时本地 `mvn package` 复现，属部署产物而非消费坐标。 -->
+                <spring-boot.repackage.skip>true</spring-boot.repackage.skip>
+            </properties>
+            <distributionManagement>
+                <repository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </repository>
+                <snapshotRepository>
+                    <id>central</id>
+                    <url>https://central.sonatype.com</url>
+                </snapshotRepository>
+            </distributionManagement>
+            <build>
+                <plugins>
+                    <!-- 中央发布场景禁用 maven-deploy-plugin 的 default-deploy，
+                         改由 central-publishing-maven-plugin 接管（避免重复 deploy） -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>3.1.4</version>
+                        <configuration>
+                            <skip>true</skip>
+                        </configuration>
+                    </plugin>
+
+                    <!-- Central 强制要求 sources.jar -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>3.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central 强制要求 javadoc.jar；doclint=none 规避 Java 8+ HTML5 校验 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>3.11.2</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                            <failOnError>false</failOnError>
+                            <failOnWarnings>false</failOnWarnings>
+                            <quiet>true</quiet>
+                            <source>1.8</source>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 剔掉 javadoc.jar 里 JDK 自带的静态资产（resource-files/script-files 等）。
+                         目录名随 JDK 大版本变，所以「有就剔、没有（zip 12）就算过」，两个布局都试。 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>strip-javadoc-resource-files</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <exec executable="sh" failonerror="true">
+                                            <arg value="-c"/>
+                                            <arg value="jar=&quot;${project.build.directory}/${project.build.finalName}-javadoc.jar&quot;; test -f &quot;$jar&quot; || exit 0; zip -q -d &quot;$jar&quot; 'resource-files/*' 'script-files/*'; rc=$?; [ &quot;$rc&quot; -eq 0 ] || [ &quot;$rc&quot; -eq 12 ]"/>
+                                        </exec>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- GPG 签名：3.2.8 不读 -Dgpg.passphrase，由仓内 wrapper 预喂
+                         （headless macOS 上默认 gpg-agent 必撞 No pinentry） -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.2.8</version>
+                        <configuration>
+                            <skip>${central.gpg.skip}</skip>
+                            <executable>${maven.multiModuleProjectDirectory}/_doc/003_script/gpg-with-passphrase.sh</executable>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Central Portal 上传插件。四个模块全进 bundle -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.7.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <tokenAuth>true</tokenAuth>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>uploaded</waitUntil>
+                            <waitMaxTime>1800</waitMaxTime>
+                            <waitPollingInterval>10</waitPollingInterval>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>

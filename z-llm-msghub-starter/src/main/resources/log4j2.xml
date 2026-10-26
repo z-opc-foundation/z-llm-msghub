@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 日志配置：app 名称与 bootstrap.yaml 中 spring.application.name 对齐 -->
+<Configuration name="z-llm-msghub" status="info">
+    <Properties>
+        <Property name="app">z-llm-msghub</Property>
+        <Property name="fileNum">10</Property>
+        <Property name="saveInterval">1</Property>
+        <Property name="saveTime">7D</Property>
+        <Property name="fileSize">50MB</Property>
+        <property name="logCharset">UTF-8</property>
+        <property name="thresholdLevel">trace</property>
+    </Properties>
+
+    <!-- ===== 自定义 Appender：按业务维度拆分 msg 服务日志 ===== -->
+    <Appenders>
+        <!-- 基础输出：控制台 + app.log（原框架 include 资源在开源版不存在，改为内联） -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout charset="${logCharset}"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{40} - %msg%n"/>
+        </Console>
+        <RollingFile name="AppFile"
+                     fileName="${logDir}/${app}/app.log"
+                     filePattern="${logDir}/${app}/app-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout charset="${logCharset}"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{40} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${saveInterval}"/>
+                <SizeBasedTriggeringPolicy size="${fileSize}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${fileNum}"/>
+        </RollingFile>
+        <!-- 消息发送：连接管理/路由转发/会话发送 -->
+        <RollingFile name="MsgSendFile"
+                     fileName="/logs/${app}/msg-send.log"
+                     filePattern="/logs/${app}/msg-send-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout charset="${logCharset}"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{40} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${saveInterval}"/>
+                <SizeBasedTriggeringPolicy size="${fileSize}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${fileNum}"/>
+        </RollingFile>
+
+        <!-- 消息接收：WebSocket 连接建立/消息接收/订阅处理 -->
+        <RollingFile name="MsgRecvFile"
+                     fileName="/logs/${app}/msg-recv.log"
+                     filePattern="/logs/${app}/msg-recv-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout charset="${logCharset}"
+                           pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{40} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="${saveInterval}"/>
+                <SizeBasedTriggeringPolicy size="${fileSize}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${fileNum}"/>
+        </RollingFile>
+    </Appenders>
+
+    <!-- ===== 自定义 Logger：按功能拆分发送/接收 =====
+         additivity=false：中间日志只进对应文件，不回流到 app.log，避免日志重复。
+    -->
+    <Loggers>
+        <!-- 消息发送：ConnectionManager(路由转发) + WebSocketHubSession/NettyHubSession(会话发送) -->
+        <Logger name="com.zifang.z.team.msg.server.ConnectionManager" level="info" additivity="false">
+            <AppenderRef ref="MsgSendFile"/>
+        </Logger>
+        <Logger name="com.zifang.z.team.msg.server.WebSocketHubSession" level="info" additivity="false">
+            <AppenderRef ref="MsgSendFile"/>
+        </Logger>
+        <Logger name="com.zifang.z.team.msg.server.NettyHubSession" level="info" additivity="false">
+            <AppenderRef ref="MsgSendFile"/>
+        </Logger>
+
+        <!-- 消息接收：MsgHubWebSocketHandler(连接/订阅/消息接收) + MsgHubHandler(消息解析) + MsgHubServer(启停) -->
+        <Logger name="com.zifang.z.team.msg.server.MsgHubWebSocketHandler" level="info" additivity="false">
+            <AppenderRef ref="MsgRecvFile"/>
+        </Logger>
+        <Logger name="com.zifang.z.team.msg.server.MsgHubHandler" level="info" additivity="false">
+            <AppenderRef ref="MsgRecvFile"/>
+        </Logger>
+        <Logger name="com.zifang.z.team.msg.server.MsgHubServer" level="info" additivity="false">
+            <AppenderRef ref="MsgRecvFile"/>
+        </Logger>
+        <!-- 根日志：控制台 + app.log -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="AppFile"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

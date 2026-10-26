@@ -1,0 +1,20 @@
+# msg-starter 本地开发配置 — z-opc 技术栈改写
+# 与 evolution / z-team 共享 workspace 根路径(~/z_team)
+
+z-team:
+  workspace:
+    env: local
+
+# 本地开发用 9090 端口,避免与 z-team-starter (8080) 冲突
+server:
+  port: 9090
+
+# msghub TCP 端口保持 9091
+msghub:
+  websocket:
+    port: 9091
+    idle-timeout-seconds: 90
+
+# 持久化路径由 MsgHubAutoConfiguration.resolveDataDir() 按 workspace 自动解析
+# env=local → ~/z_team/msgHub/
+# env=prod  → {z-config base-dir}/msgHub/

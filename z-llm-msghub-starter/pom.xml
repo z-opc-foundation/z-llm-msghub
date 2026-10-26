@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.yuku123</groupId>
+        <artifactId>z-llm-msghub</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>z-llm-msghub-starter</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Z TeamMsg Starter</name>
+    <description>msgHub Spring Boot + Netty 独立部署启动器 — z-opc 技术栈改写</description>
+
+    <dependencies>
+        <!-- Log4j2 API (本模块 src/main/java 含 LogManager.getLogger 调用) -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+        </dependency>
+        <!-- msg-core -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-llm-msghub-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- z-util-core：本模块 src/main/java 直接 import com.zifang.util.core.meta.page.PageResult -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-core</artifactId>
+        </dependency>
+
+        <!-- z-opc 基础设施（客户端依赖 + 配置中心） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-boot-base</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-config-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- z-opc Web（监控 REST + slf4j） -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-boot-web-starter</artifactId>
+        </dependency>
+
+        <!-- z-msg 消息总线(底层通信) -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-boot-msg-starter</artifactId>
+        </dependency>
+
+        <!-- Actuator(健康检查 + metrics) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- Spring WebSocket(Spring Boot HTTP 端口上的 WebSocket 端点) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <!-- Netty(旧 TCP 代码 + 测试兼容) -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
+
+        <!-- JSON -->
+        <!-- z-util-parser-json (替换 fastjson: 提供 JsonUtil + JsonObject + JsonArray) -->
+        <dependency>
+            <groupId>io.github.yuku123</groupId>
+            <artifactId>z-util-parser-json</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>z-llm-msghubhub</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.zifang.z.team.msg.MsgHubApplication</mainClass>
+                    <!-- -boot.jar 结尾 = 可启动 fat jar; 无后缀的原始 jar 是普通库件，入中央的是它 -->
+                    <classifier>boot</classifier>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                    <proc>none</proc>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <!--
+                  2026-10-22: 原来这里显式钉 3.0.0-M5，但该版本的 JUnitPlatformProvider
+                  需要 junit-platform-launcher 出现在 test classpath 上，否则启动 forked
+                  进程即抛 ClassNotFoundException: org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+                  ⇒ 本模块的测试一个都没跑（Tests run: 0 + BUILD FAILURE）。
+                  删掉显式版本，改为继承父链 pluginManagement 的 2.22.2，与家族其余模块保持一致
+                  （同 z-team-starter / z-team-web 的修法）。
+                -->
+            </plugin>
+        </plugins>
+    </build>
+</project>

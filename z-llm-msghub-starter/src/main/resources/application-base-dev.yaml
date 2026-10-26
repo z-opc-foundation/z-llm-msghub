@@ -1,0 +1,3 @@
+# base-dev 环境覆盖 — z-opc 技术栈改写
+# data-dir 由 z-team.workspace 配置自动解析为 {workspaceRoot}/msgHub/
+# 生产环境 workspace.base-dir 由 z-config 下发(指向 PV 挂载路径)

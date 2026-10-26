@@ -1,0 +1,9 @@
+# z-opc 框架要求 bootstrap.yaml 配置应用名(决定 context-path)
+# 不设则 context-path 为 /unknown,网关路由 404
+z:
+  application:
+    name: z-llm-msghub
+  extension:
+    datasource:
+      route:
+        enable: false
